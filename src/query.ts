@@ -44,7 +44,12 @@ Answer:`;
     messages: [{ role: "user", content: prompt }],
   });
 
-  return completion.choices[0].message.content;
+  const choice = completion.choices[0];
+  if (!choice || !choice.message.content) {
+  throw new Error("No response from Groq");
+  }
+
+  return choice.message.content;
 }
 
 async function main() {
