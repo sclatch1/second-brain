@@ -4,10 +4,34 @@ import path from "path";
 import { Pool } from "pg";
 import pgvector from "pgvector/pg";
 import { embed } from "./embed.js";
+import { PDFParse } from "pdf-parse";
+
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+
+
+
+async function extractText(filepath: string): Promise<string> {
+  const extension = path.extname(filepath).toLowerCase();
+
+  if (extension === ".pdf") {
+    const buffer = await readFile(filepath);
+    const data = new PDFParse({ data: buffer });
+    const result = await data.getText();
+    return cleanPdfText(result.text);
+  }
+
+  // fallback: treat as plain text (md, txt, etc.)
+  return readFile(filepath, "utf-8");
+}
+
+function cleanPdfText(text: string): string {
+  return text.replace(/-- \d+ of \d+ --/g, "").trim();
+}
+
 
 function chunkText(text: string, maxLength: number = 500): string[] {
     const paragrpaphs = text.split(/\n\s*\n/); // split on blank lines    
@@ -27,7 +51,7 @@ function chunkText(text: string, maxLength: number = 500): string[] {
 }
 
 async function ingestFile(filePath: string) {
-    const content = await readFile(filePath, "utf-8");
+    const content = await extractText(filePath);
     const chunks = chunkText(content);
     for (const chunk of chunks) {
         const embedding = await embed(chunk);
