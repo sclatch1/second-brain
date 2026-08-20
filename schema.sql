@@ -4,6 +4,7 @@ CREATE TABLE documents (
   id SERIAL PRIMARY KEY,
   content TEXT NOT NULL,
   embedding VECTOR(768), -- nomic-embed-text outputs 768 dims
+  source TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
