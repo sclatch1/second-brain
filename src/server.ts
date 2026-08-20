@@ -7,12 +7,38 @@ import Groq from "groq-sdk";
 import { embed } from "./embed.js";
 import { retrieve } from "./retrieval.js";
 import { runAgent } from "./agent.js";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
+import { chunkText } from "./retrieval.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+const agentRequestSchema = z.object({
+  question: z.string().min(1).max(200),
+});
+
+const ingestRequestSchema = z.object({
+  content: z.string().min(1).max(50000),
+  source: z.string().max(200).optional(),
+});
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,                  // limit each IP to 30 requests per window
+  message: { error: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", limiter);
 
 
 app.post("/api/query", async (req, res) => {
@@ -56,19 +82,80 @@ Answer:`;
 
 
 app.post("/api/agent", async (req, res) => {
-  try {
-    const { question } = req.body;
-    if (!question) {
-      return res.status(400).json({ error: "question is required" });
-    }
 
+    const parseResult = agentRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: "Invalid request body", details: parseResult.error });
+    }
+    
+    const { question } = parseResult.data;
+    try {
     const result = await runAgent(question);
     res.json(result);
-  } catch (err) {
+    } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Agent failed to respond" });
+    res.status(500).json({ error: "Groqer failed to respond" });
   }
 });
+
+
+function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) return res.status(401).json({ error: "No token provided" });
+
+  try {
+    jwt.verify(token, process.env.JWT_SECRET!);
+    next();
+  } catch {
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
+
+
+app.post("/api/ingest", requireAuth, async (req, res) => {
+  
+  const parseResult = ingestRequestSchema.safeParse(req.body); 
+  if (!parseResult.success) {
+    return res.status(400).json({ error: "Invalid request body", details: parseResult.error });
+  }
+
+  const { content, source } = parseResult.data;
+
+  try {
+    const chunks = chunkText(content);
+    let insertedCount = 0;
+
+    for (const chunk of chunks) {
+      const embedding = await embed(chunk);
+      await pool.query(
+        `INSERT INTO documents (content, embedding, source) VALUES ($1, $2, $3)`,
+        [chunk, pgvector.toSql(embedding), source || "unknown"]
+      );
+      insertedCount++;
+    }
+   res.json({ status: "ok", chunksInserted: insertedCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Ingestion failed" });
+  }
+});
+
+
+app.post("/api/login", async (req, res) => {
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: "Password required" });
+
+  const isValid = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH!);
+  if (!isValid) {
+    return res.status(401).json({ error: "Invalid password" });
+  }
+
+  const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET!, { expiresIn: "7d" });
+  res.json({ token });
+});
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
