@@ -5,10 +5,11 @@ import { Pool } from "pg";
 import pgvector from "pgvector/pg";
 import Groq from "groq-sdk";
 import { embed } from "./embed.js";
-import { retrieve } from "./retrieve.js";
+import { retrieve } from "./retrieval.js";
+import { runAgent } from "./agent.js";
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -50,6 +51,22 @@ Answer:`;
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+app.post("/api/agent", async (req, res) => {
+  try {
+    const { question } = req.body;
+    if (!question) {
+      return res.status(400).json({ error: "question is required" });
+    }
+
+    const result = await runAgent(question);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Agent failed to respond" });
   }
 });
 

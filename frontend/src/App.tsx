@@ -12,7 +12,7 @@ function App() {
   const [sources, setSources] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!question.trim()) return;
 
@@ -52,10 +52,10 @@ function App() {
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask something about your notes..."
+          placeholder="Ask something about my notes..."
           style={{ flex: 1, padding: 8, fontSize: 16 }}
         />
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px" }}>
+        <button type="submit" disabled={loading} style={{ padding: "8px 16px", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px" }}>
           {loading ? "Thinking..." : "Ask"}
         </button>
       </form>
