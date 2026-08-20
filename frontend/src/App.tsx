@@ -5,6 +5,8 @@ interface QueryResponse {
   sources: string[];
 }
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
 function App() {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,6 +14,10 @@ function App() {
   const [sources, setSources] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+
+   if (!token) {
+      return <LoginForm onLogin={handleLogin} />;
+    }
 
   async function handleLogin(password: string) {
     const res = await fetch(`${API_URL}/api/login`, {
@@ -33,7 +39,6 @@ function App() {
     setError(null);
     setAnswer(null);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
     try {
       const res = await fetch(`${API_URL}/api/query`, {
@@ -66,8 +71,6 @@ function App() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-
     fetch(`${API_URL}/api/ingest`, {
       method: "POST",
       headers: {
@@ -88,7 +91,12 @@ function App() {
 
   return (
     <div style={{ maxWidth: 700, margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <h1>Second Brain</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Second Brain</h1>
+        <button onClick={() => { localStorage.removeItem("token"); setToken(null); }} style={{ padding: "4px 12px" }}>
+          Log out
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
         <input
@@ -126,48 +134,46 @@ function App() {
   );
 }
 
-export default App;
 
-            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+function LoginForm({ onLogin }: { onLogin: (password: string) => Promise<void> }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-            try {
-              const res = await fetch(`${API_URL}/api/ingest`, {
-                method: "POST",
-                headers: {
-                  "x-api-key": import.meta.env.VITE_INGESTION_API_KEY || "",
-                },
-                body: formData,
-              });
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await onLogin(password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-              if (!res.ok) {
-                throw new Error(`Ingestion failed: ${res.status}`);
-              }
-
-              alert("File ingested successfully!");
-            } catch (err) {
-              alert(err instanceof Error ? err.message : "Something went wrong during ingestion");
-            }
-          }}
+  return (
+    <div style={{ maxWidth: 400, margin: "100px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
+      <h2>Second Brain</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          autoFocus
+          style={{ width: "100%", padding: 8, fontSize: 16, boxSizing: "border-box" }}
         />
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px" }}>
-          {loading ? "Thinking..." : "Ask"}
+        <button
+          type="submit"
+          disabled={loading || !password}
+          style={{ marginTop: 12, padding: "8px 16px", width: "100%" }}
+        >
+          {loading ? "Checking..." : "Log in"}
         </button>
+        {error && <p style={{ color: "red", marginTop: 12 }}>{error}</p>}
       </form>
-
-      {error && <p style={{ color: "red", marginTop: 16 }}>{error}</p>}
-
-      {answer && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Answer</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{answer}</p>
-
-          {sources.length > 0 && (
-            <p style={{ color: "#666", fontSize: 14 }}>
-              Sources: {sources.join(", ")}
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
