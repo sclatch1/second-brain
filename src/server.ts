@@ -5,13 +5,14 @@ import { Pool } from "pg";
 import pgvector from "pgvector/pg";
 import Groq from "groq-sdk";
 import { embed } from "./embed.js";
-import { retrieve } from "./retrieval.js";
+import { retrieve, chunkText } from "./retrieval.js";
 import { runAgent } from "./agent.js";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { chunkText } from "./retrieval.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import multer from "multer";
+import { extractText } from "./ingest.js";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -19,13 +20,17 @@ const agentRequestSchema = z.object({
   question: z.string().min(1).max(200),
 });
 
-const ingestRequestSchema = z.object({
-  content: z.string().min(1).max(50000),
-  source: z.string().max(200).optional(),
-});
-
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,           // your deployed Vercel URL
+  "http://localhost:5173",             // local Vite dev server
+].filter((origin): origin is string => Boolean(origin));
+
+
+app.use(cors({ origin: allowedOrigins }));
+
+
 app.use(express.json());
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -113,15 +118,20 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
   }
 }
 
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } }); // 20MB cap
 
-app.post("/api/ingest", requireAuth, async (req, res) => {
-  
-  const parseResult = ingestRequestSchema.safeParse(req.body); 
-  if (!parseResult.success) {
-    return res.status(400).json({ error: "Invalid request body", details: parseResult.error });
+
+
+app.post("/api/ingest", requireAuth, upload.single("file"), async (req, res) => {
+
+
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
   }
 
-  const { content, source } = parseResult.data;
+
+  const content = await extractText(req.file.originalname, req.file.buffer);
+  const source = req.file.originalname;
 
   try {
     const chunks = chunkText(content);
@@ -145,6 +155,7 @@ app.post("/api/ingest", requireAuth, async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   const { password } = req.body;
+
   if (!password) return res.status(400).json({ error: "Password required" });
 
   const isValid = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH!);

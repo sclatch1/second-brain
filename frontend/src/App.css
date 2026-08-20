@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --ink: #15181d;
+  --surface: #1d2128;
+  --surface-raised: #242830;
+  --brass: #c9a574;
+  --brass-dim: #8a7454;
+  --paper: #ede9e2;
+  --muted: #7d828c;
+  --border: #2c313a;
+  --error: #d97757;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Inter', sans-serif;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---------- Login screen ---------- */
+
+.login-screen {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  width: min(360px, 90vw);
+  padding: 40px 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.wordmark {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  margin: 0 0 4px;
+}
+
+.tagline {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 28px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- Shared inputs / buttons ---------- */
+
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--paper);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input[type="password"]:focus,
+input[type="text"]:focus {
+  border-color: var(--brass-dim);
+  box-shadow: 0 0 0 3px rgba(201, 165, 116, 0.12);
+}
+
+input::placeholder {
+  color: var(--muted);
+}
+
+.btn-primary {
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  background: var(--brass);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.btn-ghost {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  color: var(--paper);
+  border-color: var(--muted);
+}
+
+.error-text {
+  font-size: 13px;
+  color: var(--error);
+  margin: 4px 0 0;
+}
+
+/* ---------- Main app ---------- */
+
+.main-app {
+  width: min(680px, 92vw);
+  padding: 48px 0 80px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.ask-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ask-input {
+  flex: 1;
+}
+
+.file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.file-label:hover {
+  border-color: var(--brass-dim);
+  color: var(--brass);
+}
+
+.file-label input {
+  display: none;
+}
+
+.ask-button {
+  flex-shrink: 0;
+  min-width: 96px;
+}
+
+/* Lamp-glow thinking state, echoes the product's "reading" moment */
+.ask-button.thinking {
+  animation: lamp-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes lamp-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 165, 116, 0.35); }
+  50% { box-shadow: 0 0 14px 4px rgba(201, 165, 116, 0.35); }
+}
+
+.answer-block {
+  margin-top: 32px;
+  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  animation: rise-in 0.35s ease;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.answer-label {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin: 0 0 12px;
+}
+
+.answer-text {
+  font-size: 15.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  margin: 0;
+  color: var(--paper);
+}
+
+.answer-text code {
+  background: var(--surface-raised);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.sources-line {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-button.thinking { animation: none; }
+  .answer-block { animation: none; }
+}
+
+@media (max-width: 520px) {
+  .ask-form { flex-wrap: wrap; }
+  .ask-input { flex-basis: 100%; }
+}

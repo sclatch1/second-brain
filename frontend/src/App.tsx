@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./App.css";
 
 interface QueryResponse {
   answer: string;
@@ -15,10 +16,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
 
-   if (!token) {
-      return <LoginForm onLogin={handleLogin} />;
-    }
-
   async function handleLogin(password: string) {
     const res = await fetch(`${API_URL}/api/login`, {
       method: "POST",
@@ -31,7 +28,11 @@ function App() {
     setToken(token);
   }
 
-  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  if (!token) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!question.trim()) return;
 
@@ -39,13 +40,12 @@ function App() {
     setError(null);
     setAnswer(null);
 
-
     try {
       const res = await fetch(`${API_URL}/api/query`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ question }),
       });
@@ -74,7 +74,7 @@ function App() {
     fetch(`${API_URL}/api/ingest`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     })
@@ -90,50 +90,57 @@ function App() {
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: "40px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Second Brain</h1>
-        <button onClick={() => { localStorage.removeItem("token"); setToken(null); }} style={{ padding: "4px 12px" }}>
-          Log out
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
-        <input
-          type="text"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask something about my notes..."
-          style={{ flex: 1, padding: 8, fontSize: 16 }}
-        />
-        <input
-          type="file"
-          accept=".txt,.md,.pdf"
-          onChange={handleFileUpload}
-        />
-        <button type="submit" disabled={loading} style={{ padding: "8px 16px", backgroundColor: "#007bff", color: "#fff", border: "none", borderRadius: "4px" }}>
-          {loading ? "Thinking..." : "Ask"}
-        </button>
-      </form>
-
-      {error && <p style={{ color: "red", marginTop: 16 }}>{error}</p>}
-
-      {answer && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Answer</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{answer}</p>
-
-          {sources.length > 0 && (
-            <p style={{ color: "#666", fontSize: 14 }}>
-              Sources: {sources.join(", ")}
-            </p>
-          )}
+    <div className="app-shell">
+      <div className="main-app">
+        <div className="app-header">
+          <h1 className="wordmark">Second Brain</h1>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              localStorage.removeItem("token");
+              setToken(null);
+            }}
+          >
+            Log out
+          </button>
         </div>
-      )}
+
+        <form onSubmit={handleSubmit} className="ask-form">
+          <input
+            type="text"
+            className="ask-input"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ask something about your notes…"
+          />
+          <label className="file-label" title="Upload a note or PDF">
+            +
+            <input type="file" accept=".txt,.md,.pdf" onChange={handleFileUpload} />
+          </label>
+          <button
+            type="submit"
+            className={`btn-primary ask-button${loading ? " thinking" : ""}`}
+            disabled={loading}
+          >
+            {loading ? "Thinking…" : "Ask"}
+          </button>
+        </form>
+
+        {error && <p className="error-text">{error}</p>}
+
+        {answer && (
+          <div className="answer-block">
+            <p className="answer-label">Answer</p>
+            <p className="answer-text">{answer}</p>
+            {sources.length > 0 && (
+              <p className="sources-line">Sources: {sources.join(", ")}</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
 
 function LoginForm({ onLogin }: { onLogin: (password: string) => Promise<void> }) {
   const [password, setPassword] = useState("");
@@ -154,26 +161,24 @@ function LoginForm({ onLogin }: { onLogin: (password: string) => Promise<void> }
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "100px auto", fontFamily: "sans-serif", padding: "0 16px" }}>
-      <h2>Second Brain</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          autoFocus
-          style={{ width: "100%", padding: 8, fontSize: 16, boxSizing: "border-box" }}
-        />
-        <button
-          type="submit"
-          disabled={loading || !password}
-          style={{ marginTop: 12, padding: "8px 16px", width: "100%" }}
-        >
-          {loading ? "Checking..." : "Log in"}
-        </button>
-        {error && <p style={{ color: "red", marginTop: 12 }}>{error}</p>}
-      </form>
+    <div className="login-screen">
+      <div className="login-card">
+        <p className="wordmark">Second Brain</p>
+        <p className="tagline">your notes, queryable</p>
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoFocus
+          />
+          <button type="submit" className="btn-primary" disabled={loading || !password}>
+            {loading ? "Checking…" : "Log in"}
+          </button>
+          {error && <p className="error-text">{error}</p>}
+        </form>
+      </div>
     </div>
   );
 }

@@ -15,18 +15,16 @@ const pool = new Pool({
 
 
 
-async function extractText(filepath: string): Promise<string> {
-  const extension = path.extname(filepath).toLowerCase();
+export async function extractText(filename: string, buffer: Buffer): Promise<string> {
+  const ext = path.extname(filename).toLowerCase();
 
-  if (extension === ".pdf") {
-    const buffer = await readFile(filepath);
-    const data = new PDFParse({ data: buffer });
-    const result = await data.getText();
+  if (ext === ".pdf") {
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
     return cleanPdfText(result.text);
   }
 
-  // fallback: treat as plain text (md, txt, etc.)
-  return readFile(filepath, "utf-8");
+  return buffer.toString("utf-8");
 }
 
 function cleanPdfText(text: string): string {
@@ -34,15 +32,18 @@ function cleanPdfText(text: string): string {
 }
 
 async function ingestFile(filePath: string) {
-    const content = await extractText(filePath);
+    const buffer = await readFile(filePath);          // read raw bytes
+    const filename = path.basename(filePath);
+    const content = await extractText(filename, buffer);
+
     const chunks = chunkText(content);
     for (const chunk of chunks) {
         const embedding = await embed(chunk);
         await pool.query(
-        `INSERT INTO documents (content, embedding, source) VALUES ($1, $2, $3)`,
-        [chunk, pgvector.toSql(embedding), path.basename(filePath)]
+          `INSERT INTO documents (content, embedding, source) VALUES ($1, $2, $3)`,
+          [chunk, pgvector.toSql(embedding), filename]
         );
-        console.log(`Inserted chunk from ${filePath} (${chunk.length} characters) into database.`);
+        console.log(`Inserted chunk from ${filename} (${chunk.length} characters) into database.`);
     }
 }
 
