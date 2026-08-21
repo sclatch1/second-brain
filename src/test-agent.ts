@@ -9,7 +9,7 @@ async function main() {
 
   const result = await runAgent(question);
   console.log("\n--- Tool calls used ---");
-  console.log(result.toolsUsed);
+  console.log(result.toolCallsUsed);
   console.log("\n--- Final answer ---");
   console.log(result.answer);
 }

@@ -39,77 +39,82 @@ const tools: Groq.Chat.Completions.ChatCompletionTool[] = [
   },
 ];
 
-async function executeToolCall(name: string, args: any): Promise<string> {
+async function executeToolCall(name: string, args: any): Promise<{ result: string; resultSources: string[] }> {
     if (name === "search_notes") {
         const results = await retrieve(args.query);
         if (results.length === 0) {
-            return "No relevant notes found.";
+        return { result: "No relevant notes found.", resultSources: [] };
         }
-        const context = results
-            .map((c, i) => `[${i + 1}] (source: ${c.source})\n${c.content}`)
-            .join("\n\n");
-        return `Found the following relevant notes:\n\n${context}`;
-    } 
+        const result = results
+        .map((r, i) => `[${i + 1}] (source: ${r.source})\n${r.content}`)
+        .join("\n\n");
+        const resultSources = results.map((r) => r.source);
+        return { result, resultSources };
+    }
+
     if (name === "search_web") {
-        return await searchWeb(args.query);
+        const result = await searchWeb(args.query);
+        return { result, resultSources: [] }; // web results have URLs already inline in the text
     }
-    else {
-        throw new Error(`Unknown tool: ${name}`);
-    }
+
+    return { result: `Unknown tool: ${name}`, resultSources: [] };
 }
 
-export async function runAgent(question: string): Promise<{ answer: string; toolsUsed: {name: string, args: any}[]}> {
+export async function runAgent(userQuestion: string): Promise<{
+  answer: string;
+  toolCallsUsed: { name: string; args: any }[];
+  sources: string[];
+}> {
     const messages: Groq.Chat.Completions.ChatCompletionMessageParam[] = [
         {
             role: "system",
-            content: "You are a helpful assistant with access to the user's personal notes (search_notes) and live web search (search_web). Prefer the user's notes when relevant, and use web search for anything current or not covered in their notes. If neither source has the answer, say so honestly rather than making things up.",
+            content:
+                "You are a helpful assistant with access to the user's personal notes (search_notes) and live web search (search_web). Prefer the user's notes when relevant, and use web search for anything current or not covered in their notes. If neither source has the answer, say so honestly rather than making things up. \
+                CRITICAL: for ALL mathematical notation, you MUST use dollar-sign delimiters only: $...$ for inline math (e.g. $x^2$) and $$...$$ for block/display math (e.g. $$\\sum_i p_i$$). Never use \\(...\\), \\[...\\], or plain brackets/parentheses for math. Never use \\boxed{}.",
         },
-        { role: "user", content: question },
+        { role: "user", content: userQuestion },
     ];
 
-    const toolsUsed: {name: string, args: any}[] = [];
+    const toolCallsUsed: { name: string; args: any }[] = [];
+    const sources: Set<string> = new Set(); // Set avoids duplicate filenames
     const MAX_ITERATIONS = 5;
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
         const completion = await groq.chat.completions.create({
-            model: "openai/gpt-oss-20b",
-            messages,
-            tools,
+        model: "openai/gpt-oss-20b",
+        messages,
+        tools,
+        tool_choice: "auto",
         });
 
         const choice = completion.choices[0];
-        if (!choice || !choice.message) {
-            throw new Error("No response from model");
+        if (!choice) throw new Error("No response from model");
+
+        const responseMessage = choice.message;
+        messages.push(responseMessage);
+
+        if (!responseMessage.tool_calls || responseMessage.tool_calls.length === 0) {
+        return {
+            answer: responseMessage.content || "No answer generated.",
+            toolCallsUsed,
+            sources: Array.from(sources),
+        };
         }
 
-        const message = choice.message;
-        messages.push(message);
+        for (const toolCall of responseMessage.tool_calls) {
+        const args = JSON.parse(toolCall.function.arguments);
+        toolCallsUsed.push({ name: toolCall.function.name, args });
 
-        if (!message.tool_calls || message.tool_calls.length === 0) {
-            // Final answer — no more tools requested
-            return {
-                answer: message.content || "No answer generated.",
-                toolsUsed,
-            };
-         }
+        const { result, resultSources } = await executeToolCall(toolCall.function.name, args);
+        resultSources.forEach((s) => sources.add(s));
 
-        // Execute the tool calls
-        for (const toolCall of message.tool_calls) {
-            const args = JSON.parse(toolCall.function.arguments);
-            toolsUsed.push({ name: toolCall.function.name, args });
-
-            console.log(`[agent] calling tool: ${toolCall.function.name}(${JSON.stringify(args)})`);
-
-            const result = await executeToolCall(toolCall.function.name, args);
-
-            messages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: result,
-            });
+        messages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: result,
+        });
         }
-    // loop continues — model sees tool results, decides next step
     }
-    throw new Error("Agent exceeded max iterations without a final answer");
 
+    throw new Error("Agent exceeded max iterations without a final answer");
 }

@@ -1,9 +1,21 @@
 import { useState } from "react";
 import "./App.css";
 
-interface QueryResponse {
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+
+interface AgentResponse {
   answer: string;
+  toolCallsUsed: { name: string; args: any }[];
   sources: string[];
+}
+
+function normalizeMathDelimiters(text: string): string {
+  return text
+    .replace(/\\\[/g, "$$").replace(/\\\]/g, "$$")   // \[ \] → $$ $$
+    .replace(/\\\(/g, "$").replace(/\\\)/g, "$");     // \( \) → $ $
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
@@ -15,6 +27,10 @@ function App() {
   const [sources, setSources] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [toolCallsUsed, setToolCallsUsed] = useState<{ name: string; args: any }[]>([]);
+
+
+
 
   async function handleLogin(password: string) {
     const res = await fetch(`${API_URL}/api/login`, {
@@ -40,6 +56,7 @@ function App() {
     setError(null);
     setAnswer(null);
 
+
     try {
       const res = await fetch(`${API_URL}/api/agent`, {
         method: "POST",
@@ -54,9 +71,11 @@ function App() {
         throw new Error(`Server error: ${res.status}`);
       }
 
-      const data: QueryResponse = await res.json();
+      const data: AgentResponse = await res.json();
       setAnswer(data.answer);
-      setSources(data.sources);
+      setSources(data.sources)
+      setToolCallsUsed(data.toolCallsUsed || []);  // fallback to empty array, just in case
+
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -131,9 +150,20 @@ function App() {
         {answer && (
           <div className="answer-block">
             <p className="answer-label">Answer</p>
-            <p className="answer-text">{answer}</p>
-            {sources.length > 0 && (
-              <p className="sources-line">Sources: {sources.join(", ")}</p>
+            <div className="answer-text">
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  {normalizeMathDelimiters(answer)}
+                </ReactMarkdown>
+            </div>
+            {toolCallsUsed.length > 0 && (
+              <div className="sources-box">
+              <p className="sources-line">
+                Tools used: {toolCallsUsed.map((t) => t.name).join(", ")}
+              </p>
+              <p>
+                Sources used: {sources.map((s) => s).join(", ")}
+              </p>
+              </div>
             )}
           </div>
         )}

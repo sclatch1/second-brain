@@ -261,6 +261,11 @@ input:focus-visible {
   color: var(--muted);
 }
 
+
+.source-box {
+  flex-direction: row;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ask-button.thinking { animation: none; }
   .answer-block { animation: none; }
