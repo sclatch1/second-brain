@@ -32,7 +32,7 @@ function App() {
     return <LoginForm onLogin={handleLogin} />;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!question.trim()) return;
 
@@ -41,7 +41,7 @@ function App() {
     setAnswer(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/query`, {
+      const res = await fetch(`${API_URL}/api/agent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
