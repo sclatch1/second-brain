@@ -67,11 +67,11 @@ export async function runAgent(userQuestion: string): Promise<{
 }> {
     const messages: Groq.Chat.Completions.ChatCompletionMessageParam[] = [
         {
-            role: "system",
-            content:
-                "You are a helpful assistant with access to the user's personal notes (search_notes) and live web search (search_web). Prefer the user's notes when relevant, and use web search for anything current or not covered in their notes. If neither source has the answer, say so honestly rather than making things up. \
-                CRITICAL: for ALL mathematical notation, you MUST use dollar-sign delimiters only: $...$ for inline math (e.g. $x^2$) and $$...$$ for block/display math (e.g. $$\\sum_i p_i$$). Never use \\(...\\), \\[...\\], or plain brackets/parentheses for math. Never use \\boxed{}.",
-        },
+          role: "system",
+          content:
+              "You are a helpful assistant with access to the user's personal notes (search_notes) and live web search (search_web). Prefer the user's notes when relevant, and use web search for anything current or not covered in their notes. If neither source has the answer, say so honestly rather than making things up. " +
+              "CRITICAL: for currency amounts, just write them plainly like $0.1. Do NOT wrap currency in math delimiters! For actual mathematical notation (equations, formulas, variables), use $$...$$ only, both for inline and block math. Never use single $ for math, never use \\(...\\), \\[...\\], or \\boxed{}.",
+      },
         { role: "user", content: userQuestion },
     ];
 
