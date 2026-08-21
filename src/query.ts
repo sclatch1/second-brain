@@ -1,4 +1,3 @@
-// src/ask.ts
 import "dotenv/config";
 import { Pool } from "pg";
 import pgvector from "pgvector/pg";

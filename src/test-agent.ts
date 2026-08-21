@@ -1,4 +1,4 @@
-import { runAgent } from "./agent.js";
+import { runAgent } from "./services/agentService.js";
 
 async function main() {
   const question = process.argv[2];
