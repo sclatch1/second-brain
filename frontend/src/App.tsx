@@ -6,18 +6,12 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
+import { normalizeMathDelimiters } from './utils/normalizeMathDelimiter';
+
 interface AgentResponse {
   answer: string;
   toolCallsUsed: { name: string; args: any }[];
   sources: string[];
-}
-
-function normalizeMathDelimiters(text: string): string {
-  return text
-    .replace(/\\\[/g, '$$')
-    .replace(/\\\]/g, '$$') // \[ \] → $$ $$
-    .replace(/\\\(/g, '$')
-    .replace(/\\\)/g, '$'); // \( \) → $ $
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
