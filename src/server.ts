@@ -13,6 +13,7 @@ const allowedOrigins = [
 ].filter((origin): origin is string => Boolean(origin));
 
 const app = express();
+app.set("trust proxy", 1);
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
