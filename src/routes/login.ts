@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export const loginRoutes: express.Router = express.Router();
 
-loginRoutes.post("/api/login", async (req, res) => {
+loginRoutes.post("/", async (req, res) => {
   const { password } = req.body;
 
   if (!password) return res.status(400).json({ error: "Password required" });

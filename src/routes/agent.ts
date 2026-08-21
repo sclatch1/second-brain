@@ -10,7 +10,7 @@ const agentRequestSchema = z.object({
 
 export const agentRoutes: express.Router = express.Router();
 
-agentRoutes.post("/api/agent", async (req, res) => {
+agentRoutes.post("/", async (req, res) => {
 
     const parseResult = agentRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
