@@ -1,24 +1,37 @@
 import "dotenv/config";
 import Groq from "groq-sdk";
 import { retrieve } from "../retrieval.js";
+import { searchWeb } from "./webSearchService.js";
 
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+
 
 const tools: Groq.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",
     function: {
       name: "search_notes",
-      description:
-        "Search the user's personal notes for information relevant to a query. Use this whenever the question might be answered by the user's own notes.",
+      description: "Search the user's personal notes for information relevant to a query. Use this whenever the question might be answered by the user's own notes.",
       parameters: {
         type: "object",
         properties: {
-          query: {
-            type: "string",
-            description: "The search query — can be a rephrased or focused version of the user's question",
-          },
+          query: { type: "string", description: "The search query" },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_web",
+      description: "Search the live web for current information. Use this when the user's notes don't cover the topic, or when the question needs up-to-date information not likely to be in personal notes (news, current events, recent facts).",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query" },
         },
         required: ["query"],
       },
@@ -36,14 +49,21 @@ async function executeToolCall(name: string, args: any): Promise<string> {
             .map((c, i) => `[${i + 1}] (source: ${c.source})\n${c.content}`)
             .join("\n\n");
         return `Found the following relevant notes:\n\n${context}`;
-    } else {
+    } 
+    if (name === "search_web") {
+        return await searchWeb(args.query);
+    }
+    else {
         throw new Error(`Unknown tool: ${name}`);
     }
 }
 
 export async function runAgent(question: string): Promise<{ answer: string; toolsUsed: {name: string, args: any}[]}> {
     const messages: Groq.Chat.Completions.ChatCompletionMessageParam[] = [
-        { role: "system", content: "You are a helpful assistant that answers questions based on the user's personal notes." },
+        {
+            role: "system",
+            content: "You are a helpful assistant with access to the user's personal notes (search_notes) and live web search (search_web). Prefer the user's notes when relevant, and use web search for anything current or not covered in their notes. If neither source has the answer, say so honestly rather than making things up.",
+        },
         { role: "user", content: question },
     ];
 
