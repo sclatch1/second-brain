@@ -6,11 +6,7 @@ import pgvector from "pgvector/pg";
 import { embed } from "../embed.js";
 import { PDFParse } from "pdf-parse";
 import { chunkText } from "../retrieval.js";
-
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "../db/pool.js";
 
 export async function extractText(filename: string, buffer: Buffer): Promise<string> {
   const ext = path.extname(filename).toLowerCase();
@@ -43,4 +39,19 @@ export async function ingestFile(filePath: string) {
         console.log(`Inserted chunk from ${filename} (${chunk.length} characters) into database.`);
     }
     return { chunksInserted: chunks.length, source: filename };
+}
+
+export async function ingestBuffer(filename: string, buffer: Buffer) {
+  const content = await extractText(filename, buffer);
+  const chunks = chunkText(content);
+
+  for (const chunk of chunks) {
+    const embedding = await embed(chunk);
+    await pool.query(
+      `INSERT INTO documents (content, embedding, source) VALUES ($1, $2, $3)`,
+      [chunk, pgvector.toSql(embedding), filename]
+    );
+  }
+
+  return { chunksInserted: chunks.length, source: filename };
 }
