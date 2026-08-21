@@ -151,7 +151,10 @@ function App() {
           <div className="answer-block">
             <p className="answer-label">Answer</p>
             <div className="answer-text">
-                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                <ReactMarkdown
+                    remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
                   {normalizeMathDelimiters(answer)}
                 </ReactMarkdown>
             </div>
