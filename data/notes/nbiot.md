@@ -295,20 +295,20 @@ exactly — an upper bound on any fixed-period policy, not a predictor), or
 Both channels share the same `PhysicalLayer` model, following the 3GPP
 TR 38.901 / ITU-R M.2412 Urban Macro-mMTC (Configuration A) parameters:
 
-| Parameter | Value |
-|---|---|
-| Carrier frequency | 700 MHz |
-| Cell radius | 250 m (half the M.2412 Config A inter-site distance of 500 m) |
-| Device distance | Disk point-picking, uniform by area, in [10, 250] m |
-| Path loss | UMa NLOS: `max(PL_LOS, PL'_NLOS)`; NLOS dominates over the whole valid range for these parameters |
-| Shadow fading σ | 6 dB (parameterized; disabled in the current received-power calculation) |
-| Device TX power | 14 dBm (Release-14 power class; M.2412's own baseline specifies 23 dBm) |
-| BS noise figure | 5 dB |
+| Parameter         | Value                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Carrier frequency | 700 MHz                                                                                           |
+| Cell radius       | 250 m (half the M.2412 Config A inter-site distance of 500 m)                                     |
+| Device distance   | Disk point-picking, uniform by area, in [10, 250] m                                               |
+| Path loss         | UMa NLOS: `max(PL_LOS, PL'_NLOS)`; NLOS dominates over the whole valid range for these parameters |
+| Shadow fading σ   | 6 dB (parameterized; disabled in the current received-power calculation)                          |
+| Device TX power   | 14 dBm (Release-14 power class; M.2412's own baseline specifies 23 dBm)                           |
+| BS noise figure   | 5 dB                                                                                              |
 
 | Channel | Subcarrier spacing | Repetitions |
-|---|---|---|
-| NPRACH | 3.75 kHz | 8 |
-| NPUSCH | 15 kHz | 2 |
+| ------- | ------------------ | ----------- |
+| NPRACH  | 3.75 kHz           | 8           |
+| NPUSCH  | 15 kHz             | 2           |
 
 BLER is looked up from fitted curves (`bler_function.py`) against the
 resulting SINR.
@@ -344,15 +344,15 @@ can be tied to a fixed-size policy:
 
 Default reward weights (`nbiot_env/constants.py`):
 
-| Term | Weight | Sign |
-|---|---|---|
-| Successful transmission | 2.0 | + |
-| Buffer reduction | 3.0 | + |
-| Wasted grant | 2.0 | − |
-| Mean buffer occupancy | 0.25 | − |
-| Max buffer occupancy | 0.25 | − |
-| Queuing delay | 2.0 | − |
-| Accepted period change | 0.5 | − |
+| Term                    | Weight | Sign |
+| ----------------------- | ------ | ---- |
+| Successful transmission | 2.0    | +    |
+| Buffer reduction        | 3.0    | +    |
+| Wasted grant            | 2.0    | −    |
+| Mean buffer occupancy   | 0.25   | −    |
+| Max buffer occupancy    | 0.25   | −    |
+| Queuing delay           | 2.0    | −    |
+| Accepted period change  | 0.5    | −    |
 
 (`buffer_imbalance` and `buffer_growth` exist as reward terms with weight 0
 by default.)
@@ -365,14 +365,14 @@ with.
 
 ### Related work
 
-| Paper | Network and scheduling decision | Algorithm | Main objective / measurements | Relevance to this project | Link |
-| --- | --- | --- | --- | --- | --- |
-| **Deep Reinforcement Learning for Scheduling Uplink IoT Traffic with Strict Deadlines** (Robaglia et al., 2021) | A base station polls one device per slot under hidden periodic traffic and packet deadlines. | PPO with a recurrent neural network; also proposes invalid-action masking as *Filtered PPO*. | Successful transmissions, discarded packets, and learning under partial observability. | **Very high.** Closest learning problem: PPO must infer periodic traffic from scheduling outcomes. It selects the next device; this project selects each device's recurring grant period. | [PDF](https://marceaucoupechoux.wp.imt.fr/files/2021/10/globecom21.pdf) · [IEEE](https://ieeexplore.ieee.org/document/9685561/) |
-| **Random Access Control in NB-IoT With Model-Based Reinforcement Learning** (Alcaraz et al., 2025) | NB-IoT random-access control via model-based RL. | Model-based reinforcement learning. | Resource use and adaptation under NPRACH configuration. | **High at the protocol level.** Directly addresses NB-IoT access control; this project addresses the proactive-grant alternative rather than RA parameter tuning. | [DOI](https://doi.org/10.1109/JIOT.2024.3499854) |
-| **Buffer-aware Wireless Scheduling based on Deep Reinforcement Learning** (Xu et al., 2019) | Cellular packet scheduling with finite buffers, delay constraints, and varying active users. | Advantage Actor-Critic (A2C) with action masking. | Throughput, Jain fairness, packet-drop rate, queue occupancy, and delay. | **High.** Queue-aware observations and delay/drop objectives map directly onto this project's buffer and wasted-grant terms. | [arXiv](https://arxiv.org/abs/1911.05281) |
-| **Traffic Prediction Based Fast Uplink Grant for Massive IoT** (Shehab et al., 2020) | Predicts each device's activity probability and grants the highest-likelihood device. | Hidden Markov Model and binary On-Off Markov traffic. | Resource efficiency, regret, and Age of Information vs. random access. | **Very high.** A direct model-based FUG baseline: it explicitly models traffic transitions rather than learning a period from buffer/grant outcomes. | [arXiv](https://arxiv.org/abs/2008.02207) |
-| **A Learning-Based Fast Uplink Grant for Massive IoT via SVM and LSTM** (Eldeeb et al., 2021) | SVM prioritization plus LSTM traffic prediction/correction before grant assignment. | Supervised predict-then-grant. | Throughput and latency under correlated massive-IoT traffic. | **Very high.** A supervised predict-then-grant alternative to this project's end-to-end RL approach. | [arXiv](https://arxiv.org/abs/2108.10070) |
-| **Counterfactual Multi-Agent Policy Gradients** (Foerster et al., 2018) | Cooperative multi-agent control with a shared team reward. | Centralized critic with a counterfactual baseline (COMA). | Credit assignment under a shared reward. | **High, architecturally.** The centralized-critic/decentralized-actor split and the credit-assignment problem it addresses motivate this project's per-device critic. | [AAAI](https://doi.org/10.1609/aaai.v32i1.11794) |
+| Paper                                                                                                           | Network and scheduling decision                                                              | Algorithm                                                                                    | Main objective / measurements                                                          | Relevance to this project                                                                                                                                                                 | Link                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Deep Reinforcement Learning for Scheduling Uplink IoT Traffic with Strict Deadlines** (Robaglia et al., 2021) | A base station polls one device per slot under hidden periodic traffic and packet deadlines. | PPO with a recurrent neural network; also proposes invalid-action masking as _Filtered PPO_. | Successful transmissions, discarded packets, and learning under partial observability. | **Very high.** Closest learning problem: PPO must infer periodic traffic from scheduling outcomes. It selects the next device; this project selects each device's recurring grant period. | [PDF](https://marceaucoupechoux.wp.imt.fr/files/2021/10/globecom21.pdf) · [IEEE](https://ieeexplore.ieee.org/document/9685561/) |
+| **Random Access Control in NB-IoT With Model-Based Reinforcement Learning** (Alcaraz et al., 2025)              | NB-IoT random-access control via model-based RL.                                             | Model-based reinforcement learning.                                                          | Resource use and adaptation under NPRACH configuration.                                | **High at the protocol level.** Directly addresses NB-IoT access control; this project addresses the proactive-grant alternative rather than RA parameter tuning.                         | [DOI](https://doi.org/10.1109/JIOT.2024.3499854)                                                                                |
+| **Buffer-aware Wireless Scheduling based on Deep Reinforcement Learning** (Xu et al., 2019)                     | Cellular packet scheduling with finite buffers, delay constraints, and varying active users. | Advantage Actor-Critic (A2C) with action masking.                                            | Throughput, Jain fairness, packet-drop rate, queue occupancy, and delay.               | **High.** Queue-aware observations and delay/drop objectives map directly onto this project's buffer and wasted-grant terms.                                                              | [arXiv](https://arxiv.org/abs/1911.05281)                                                                                       |
+| **Traffic Prediction Based Fast Uplink Grant for Massive IoT** (Shehab et al., 2020)                            | Predicts each device's activity probability and grants the highest-likelihood device.        | Hidden Markov Model and binary On-Off Markov traffic.                                        | Resource efficiency, regret, and Age of Information vs. random access.                 | **Very high.** A direct model-based FUG baseline: it explicitly models traffic transitions rather than learning a period from buffer/grant outcomes.                                      | [arXiv](https://arxiv.org/abs/2008.02207)                                                                                       |
+| **A Learning-Based Fast Uplink Grant for Massive IoT via SVM and LSTM** (Eldeeb et al., 2021)                   | SVM prioritization plus LSTM traffic prediction/correction before grant assignment.          | Supervised predict-then-grant.                                                               | Throughput and latency under correlated massive-IoT traffic.                           | **Very high.** A supervised predict-then-grant alternative to this project's end-to-end RL approach.                                                                                      | [arXiv](https://arxiv.org/abs/2108.10070)                                                                                       |
+| **Counterfactual Multi-Agent Policy Gradients** (Foerster et al., 2018)                                         | Cooperative multi-agent control with a shared team reward.                                   | Centralized critic with a counterfactual baseline (COMA).                                    | Credit assignment under a shared reward.                                               | **High, architecturally.** The centralized-critic/decentralized-actor split and the credit-assignment problem it addresses motivate this project's per-device critic.                     | [AAAI](https://doi.org/10.1609/aaai.v32i1.11794)                                                                                |
 
 ---
 

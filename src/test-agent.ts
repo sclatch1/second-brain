@@ -1,4 +1,4 @@
-import { runAgent } from "./services/agentService.js";
+import { runAgent } from './services/agentService.js';
 
 async function main() {
   const question = process.argv[2];
@@ -8,9 +8,9 @@ async function main() {
   }
 
   const result = await runAgent(question);
-  console.log("\n--- Tool calls used ---");
+  console.log('\n--- Tool calls used ---');
   console.log(result.toolCallsUsed);
-  console.log("\n--- Final answer ---");
+  console.log('\n--- Final answer ---');
   console.log(result.answer);
 }
 

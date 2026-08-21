@@ -72,8 +72,8 @@ body {
 
 /* ---------- Shared inputs / buttons ---------- */
 
-input[type="password"],
-input[type="text"] {
+input[type='password'],
+input[type='text'] {
   width: 100%;
   padding: 11px 14px;
   font-size: 15px;
@@ -86,8 +86,8 @@ input[type="text"] {
   transition: border-color 0.15s ease;
 }
 
-input[type="password"]:focus,
-input[type="text"]:focus {
+input[type='password']:focus,
+input[type='text']:focus {
   border-color: var(--brass-dim);
   box-shadow: 0 0 0 3px rgba(201, 165, 116, 0.12);
 }
@@ -106,7 +106,9 @@ input::placeholder {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: filter 0.15s ease, transform 0.1s ease;
+  transition:
+    filter 0.15s ease,
+    transform 0.1s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -138,7 +140,9 @@ input:focus-visible {
   border: 1px solid var(--border);
   border-radius: 7px;
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .btn-ghost:hover {
@@ -187,7 +191,9 @@ input:focus-visible {
   color: var(--muted);
   cursor: pointer;
   font-size: 18px;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
   flex-shrink: 0;
 }
 
@@ -211,8 +217,13 @@ input:focus-visible {
 }
 
 @keyframes lamp-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 165, 116, 0.35); }
-  50% { box-shadow: 0 0 14px 4px rgba(201, 165, 116, 0.35); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 165, 116, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(201, 165, 116, 0.35);
+  }
 }
 
 .answer-block {
@@ -225,8 +236,14 @@ input:focus-visible {
 }
 
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .answer-label {
@@ -261,17 +278,24 @@ input:focus-visible {
   color: var(--muted);
 }
 
-
 .source-box {
   flex-direction: row;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ask-button.thinking { animation: none; }
-  .answer-block { animation: none; }
+  .ask-button.thinking {
+    animation: none;
+  }
+  .answer-block {
+    animation: none;
+  }
 }
 
 @media (max-width: 520px) {
-  .ask-form { flex-wrap: wrap; }
-  .ask-input { flex-basis: 100%; }
+  .ask-form {
+    flex-wrap: wrap;
+  }
+  .ask-input {
+    flex-basis: 100%;
+  }
 }

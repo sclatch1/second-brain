@@ -7,7 +7,8 @@ vLLM Metal is a plugin that enables vLLM to run on Apple Silicon Macs using MLX 
 **Documentation**: https://docs.vllm.ai/projects/vllm-metal/en/latest/
 
 ---
-*Latest News* 🔥
+
+_Latest News_ 🔥
 
 - [2026/04] We released the new version v0.2.0! Unified paged varlen Metal kernel is now the default attention backend. 83x TTFT, 3.6x throughput compared to v0.1.0.
 
@@ -29,6 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm-metal/main/instal
 ```
 
 Using the install script above, the following will be installed under the `~/.venv-vllm-metal` directory (the default).
+
 - vllm-metal plugin
 - vllm core
 - Related libraries
