@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { agentRoutes } from './routes/agent.js';
-import ingestRoutes from './routes/ingest.js';
+import { ingestRouter } from './routes/ingest.js';
 import { loginRoutes } from './routes/login.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import rateLimit from 'express-rate-limit';
@@ -38,7 +38,7 @@ app.use('/api/login', loginLimiter);
 app.use('/api/', limiter);
 
 app.use('/api/agent', agentRoutes);
-app.use('/api/ingest', ingestRoutes);
+app.use('/api/ingest', ingestRouter);
 app.use('/api/login', loginRoutes);
 
 app.use(errorHandler); // must be registered LAST
